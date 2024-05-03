@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Laravel\Socialite\Facades\Socialite;
 
@@ -8,24 +9,19 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/google-auth/redirect', function () {
+Route::get('/login-google', function () {
     return Socialite::driver('google')->redirect();
 });
  
-Route::get('/google-auth/callback', function () {
-    $user = Socialite::driver('google')->stateless()->user();
-    $user = User::updateOrCreate([
-        'google_id' => $user_google->id,
-    ], [
-        'name' => $user_google->name,
-        'email' => $user_google->email,
-    ]);
+Route::get('/google-callback', function () {
+    $userExists = Socialite::driver('google')->user();
+    
+    $userExists = User::where('external_id', $userExists->id)->where('external_auth', 'google')->first();
 
-    Auth::login($user);
-
-    return redirect('/dashboard');
+    if($userExists){
+        Auth::login($userExists);
+    }
 });
-
 
 Route::get('/dashboard', function () {
     return view('dashboard');
